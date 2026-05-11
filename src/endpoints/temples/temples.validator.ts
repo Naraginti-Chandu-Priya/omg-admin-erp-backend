@@ -6,15 +6,24 @@ export const createTempleValidator: Schema = {
     exists: { errorMessage: 'Name is required' },
     isString: true
   },
-  code: {
+  superadmin: {
     in: 'body',
-    exists: { errorMessage: 'Code is required' },
+    exists: { errorMessage: 'Superadmin details are required' }
+  },
+  'superadmin.firstName': {
+    in: 'body',
+    exists: { errorMessage: 'Superadmin first name is required' },
     isString: true
   },
-  email: {
+  'superadmin.lastName': {
     in: 'body',
-    exists: { errorMessage: 'Email is required' },
-    isEmail: { errorMessage: 'Invalid email address' }
+    exists: { errorMessage: 'Superadmin last name is required' },
+    isString: true
+  },
+  'superadmin.email': {
+    in: 'body',
+    exists: { errorMessage: 'Superadmin email is required' },
+    isEmail: { errorMessage: 'Invalid superadmin email address' }
   }
 };
 
@@ -23,11 +32,6 @@ export const updateTempleValidator: Schema = {
     in: 'body',
     optional: true,
     isString: true
-  },
-  email: {
-    in: 'body',
-    optional: true,
-    isEmail: { errorMessage: 'Invalid email address' }
   }
 };
 

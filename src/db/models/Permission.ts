@@ -3,29 +3,28 @@ import {
   Column,
   Model,
   DataType,
-  BelongsToMany,
+  BelongsToMany
 } from 'sequelize-typescript';
-import { RolePermission } from './RolePermission';
-import { Role } from './Role';
+import { User } from './User';
+import { UserPermission } from './UserPermission';
 
-@Table
+@Table({
+  tableName: 'permissions',
+  timestamps: true
+})
 export class Permission extends Model {
-  @Column({ type: DataType.STRING, allowNull: false ,unique: true,})
-  action!: string; // The action that the permission allows, now the primary key
-  
-  @Column({ type: DataType.STRING, allowNull: false })
-  groupName!: string;
+  @Column({
+    type: DataType.STRING,
+    allowNull: false
+  })
+  route!: string;
 
-  @Column({ type: DataType.STRING, allowNull: false })
-  description!: string;
+  @Column({
+    type: DataType.ENUM('read', 'read_write'),
+    allowNull: false
+  })
+  access!: 'read' | 'read_write';
 
-  // Audit columns
-  @Column({ type: DataType.INTEGER, allowNull: true })
-  createdBy?: number; // User who created the permission
-
-  @Column({ type: DataType.INTEGER, allowNull: true })
-  updatedBy?: number; // User who last updated the permission
-
-  @BelongsToMany(() => Role, () => RolePermission)
-  roles!: Role[];
+  @BelongsToMany(() => User, () => UserPermission)
+  users!: User[];
 }

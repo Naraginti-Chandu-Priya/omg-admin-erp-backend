@@ -7,33 +7,31 @@ import {
 } from 'sequelize-typescript';
 import { User } from './User';
 
-// Determine dialect (database type)
 const dialect = (process.env.SQL_TYPE ?? 'postgres').toLowerCase();
 
 @Table
 export class Audit extends Model {
   @Column({ type: DataType.STRING, allowNull: false })
-  entityType!: string; // Name of the entity (e.g., "User", "Department")
+  entityType!: string;
 
   @Column({ type: DataType.INTEGER, allowNull: false })
-  entityId!: number; // ID of the record in the entity table
+  entityId!: number;
 
   @Column({ type: DataType.STRING, allowNull: false })
-  action!: string; // Action performed (e.g., "CREATE", "UPDATE", "DELETE")
+  action!: string;
 
-  // JSON fields - support different types based on dialect
   @Column({
     type: dialect === 'mssql' ? DataType.STRING : DataType.JSON,
     allowNull: true,
     get() {
       const value = this.getDataValue('previousData');
       if (typeof value === 'string') {
-        return JSON.parse(value); // Parse the string as JSON
+        return JSON.parse(value);
       }
       return value;
     }
   })
-  declare previousData?: object; // JSON object with previous data before change
+  declare previousData?: object;
 
   @Column({
     type: dialect === 'mssql' ? DataType.STRING : DataType.JSON,
@@ -41,14 +39,14 @@ export class Audit extends Model {
     get() {
       const value = this.getDataValue('newData');
       if (typeof value === 'string') {
-        return JSON.parse(value); // Parse the string as JSON
+        return JSON.parse(value);
       }
       return value;
     }
   })
-  declare newData?: object; // JSON object with new data after change
+  declare newData?: object;
 
   @ForeignKey(() => User)
   @Column({ type: DataType.INTEGER, allowNull: true })
-  performedBy?: number; // ID of the user who performed the action
+  performedBy?: number;
 }

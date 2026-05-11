@@ -4,11 +4,14 @@ import {
   Model,
   DataType,
   ForeignKey,
-  BelongsTo
+  BelongsTo,
+  BelongsToMany
 } from 'sequelize-typescript';
 
 import { Role } from './Role';
 import { Temple } from './Temple';
+import { Permission } from './Permission';
+import { UserPermission } from './UserPermission';
 
 @Table
 export class User extends Model {
@@ -72,12 +75,15 @@ export class User extends Model {
   mfaAccountLockedUntil?: Date;
 
   @ForeignKey(() => Temple)
-  @Column({ type: DataType.INTEGER, allowNull: true })
-  templeId?: number;
+  @Column({ type: DataType.UUID, allowNull: true })
+  templeId?: string;
 
   @BelongsTo(() => Role)
   role!: Role;
 
   @BelongsTo(() => Temple)
   temple?: Temple;
+
+  @BelongsToMany(() => Permission, () => UserPermission)
+  userPermissions!: Permission[];
 }

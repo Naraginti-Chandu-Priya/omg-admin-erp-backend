@@ -1,4 +1,4 @@
-import {Server, reportDebug, middleware, SecretManagerOptions} from 'node-server-engine';
+import { Server, reportDebug, middleware, SecretManagerOptions } from 'node-server-engine';
 import * as endpoints from 'endpoints';
 
 reportDebug.setNameSpace('~~namespace~~');
@@ -16,7 +16,7 @@ export function createServer(): Server {
       // Example: Load string secrets directly as environment variables
       // 'SQL_PASSWORD',
       // 'JWT_SECRET',
-      
+
       // Example: Load file-based secrets (keys, certificates, etc.)
       // {
       //   name: 'PRIVATE_KEY',
@@ -37,6 +37,6 @@ export function createServer(): Server {
     globalMiddleware: [middleware.swaggerDocs()],
     endpoints: Object.values(endpoints),
     // Uncomment to enable Secret Manager
-     secretManager: secretManagerConfig
+    secretManager: secretManagerConfig
   });
 }

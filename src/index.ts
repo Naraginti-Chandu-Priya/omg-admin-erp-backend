@@ -32,14 +32,21 @@ createServer()
       reportInfo('Database initialization enabled');
       try {
         await sequelize.init();
-        const modelArray = Object.values(models);
+        const modelArray = Object.values(models).filter(m => typeof m === 'function');
+        reportInfo(`Loading ${modelArray.length} models`);
         await sequelize.addModels(modelArray);
         reportInfo('Database migration started');
         await runPendingMigrations();
         reportInfo('Database initialized and migrations completed');
       } catch (dbError) {
         reportError('Database initialization failed');
-        reportError(dbError);
+        if (dbError instanceof Error) {
+          reportError(`Error name: ${dbError.name}`);
+          reportError(`Error message: ${dbError.message}`);
+          reportError(`Error stack: ${dbError.stack}`);
+        } else {
+          reportError(JSON.stringify(dbError));
+        }
         // Exit if database is required but failed
         process.exit(1);
       }
@@ -57,6 +64,12 @@ createServer()
   })
   .catch((error) => {  
     reportError('Failed to start HTTP server');
-    reportError(error);
+    if (error instanceof Error) {
+      reportError(`Error name: ${error.name}`);
+      reportError(`Error message: ${error.message}`);
+      reportError(`Error stack: ${error.stack}`);
+    } else {
+      reportError(JSON.stringify(error));
+    }
     process.exit(1);
   });
