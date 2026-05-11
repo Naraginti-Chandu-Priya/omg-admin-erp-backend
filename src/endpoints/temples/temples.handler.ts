@@ -13,10 +13,12 @@ import { sendMail } from '../../utils/mailer';
 import { onBoardTemplateAdmin } from '../users/userManagement.template';
 import { generateSecretToken } from '../users/userManagement.helpers';
 import { CreateSecret } from '../users/userManagement.types';
+import { Permission, UserPermission } from 'db';
+import { Op } from 'sequelize';
 
 // POST /temples - Create temple and its superadmin
-export const createTempleHandler: EndpointHandler<EndpointAuthType.JWT> = async (
-  req: EndpointRequestType[EndpointAuthType.JWT],
+export const createTempleHandler: EndpointHandler<EndpointAuthType.NONE> = async (
+  req: EndpointRequestType[EndpointAuthType.NONE],
   res: Response
 ) => {
   const { name, address, city, state, country, logo, superadmin } = req.body;
@@ -26,7 +28,7 @@ export const createTempleHandler: EndpointHandler<EndpointAuthType.JWT> = async 
 
   try {
     // 1. Create the Temple
-    const templeCode = nanoid(8).toUpperCase(); // Generate a unique code
+    const templeCode = `tem-${nanoid(4).toUpperCase()}`; // Generate a unique code like tem-X798
     const temple = await Temple.create({
       name, 
       code: templeCode, 
@@ -65,7 +67,27 @@ export const createTempleHandler: EndpointHandler<EndpointAuthType.JWT> = async 
       mfaFailedCount: 0
     }, { transaction });
 
-    // 4. Generate Password Creation Token
+    // 4. Grant Permissions to the Superadmin
+    // Get all standard permissions except global wildcard and temple management
+    const allPermissions = await Permission.findAll({
+      where: {
+        route: {
+          [Op.notIn]: ['*', 'temples']
+        }
+      },
+      transaction
+    });
+
+    const userPermissionsToInsert = allPermissions.map((p) => ({
+      userId: createdSuperadmin.id,
+      permissionId: p.id
+    }));
+
+    if (userPermissionsToInsert.length > 0) {
+      await UserPermission.bulkCreate(userPermissionsToInsert, { transaction });
+    }
+
+    // 5. Generate Password Creation Token
     const tokenPayload: CreateSecret = {
       userId: createdSuperadmin.id,
       exp: new Date(Date.now() + 72 * 60 * 60 * 1000), // 72 hours
@@ -82,7 +104,7 @@ export const createTempleHandler: EndpointHandler<EndpointAuthType.JWT> = async 
 
     await transaction.commit();
 
-    // 5. Send Onboarding Email
+    // 6. Send Onboarding Email
     const mailSent = await sendMail({
       to: superadmin.email,
       subject: 'Welcome to OMG Temple ERP - Account Setup',
@@ -90,7 +112,7 @@ export const createTempleHandler: EndpointHandler<EndpointAuthType.JWT> = async 
     });
 
     res.status(201).json({
-      message: 'Temple and Superadmin created successfully',
+      message: 'Temple and Superadmin created successfully with permissions',
       temple,
       superadminId: createdSuperadmin.id,
       mailSent
@@ -103,8 +125,8 @@ export const createTempleHandler: EndpointHandler<EndpointAuthType.JWT> = async 
 };
 
 // GET /temples - Get all temples
-export const getAllTemplesHandler: EndpointHandler<EndpointAuthType.JWT> = async (
-  _req: EndpointRequestType[EndpointAuthType.JWT],
+export const getAllTemplesHandler: EndpointHandler<EndpointAuthType.NONE> = async (
+  _req: EndpointRequestType[EndpointAuthType.NONE],
   res: Response
 ) => {
   try {
@@ -117,8 +139,8 @@ export const getAllTemplesHandler: EndpointHandler<EndpointAuthType.JWT> = async
 };
 
 // GET /temples/:id - Get temple by ID with its users
-export const getTempleByIdHandler: EndpointHandler<EndpointAuthType.JWT> = async (
-  req: EndpointRequestType[EndpointAuthType.JWT],
+export const getTempleByIdHandler: EndpointHandler<EndpointAuthType.NONE> = async (
+  req: EndpointRequestType[EndpointAuthType.NONE],
   res: Response
 ) => {
   const { id } = req.params;
@@ -136,8 +158,8 @@ export const getTempleByIdHandler: EndpointHandler<EndpointAuthType.JWT> = async
 };
 
 // PUT /temples/:id - Update temple
-export const updateTempleHandler: EndpointHandler<EndpointAuthType.JWT> = async (
-  req: EndpointRequestType[EndpointAuthType.JWT],
+export const updateTempleHandler: EndpointHandler<EndpointAuthType.NONE> = async (
+  req: EndpointRequestType[EndpointAuthType.NONE],
   res: Response
 ) => {
   const { id } = req.params;
@@ -149,6 +171,26 @@ export const updateTempleHandler: EndpointHandler<EndpointAuthType.JWT> = async 
       return;
     }
     await temple.update(updates);
+
+    // Update associated superadmin if provided
+    if (updates.superadmin) {
+      const superadmin = await User.findOne({
+        where: {
+          templeId: id,
+          roleId: 1 // superadmin role
+        }
+      });
+
+      if (superadmin) {
+        await superadmin.update({
+          firstName: updates.superadmin.firstName,
+          lastName: updates.superadmin.lastName,
+          email: updates.superadmin.email,
+          phoneNumber: updates.superadmin.phoneNumber || updates.superadmin.phonenumber
+        });
+      }
+    }
+
     res.status(200).json({ message: 'Temple updated', temple });
   } catch (error) {
     reportError(error);
@@ -157,8 +199,8 @@ export const updateTempleHandler: EndpointHandler<EndpointAuthType.JWT> = async 
 };
 
 // PATCH /temples/:id/status - Update temple status
-export const updateTempleStatusHandler: EndpointHandler<EndpointAuthType.JWT> = async (
-  req: EndpointRequestType[EndpointAuthType.JWT],
+export const updateTempleStatusHandler: EndpointHandler<EndpointAuthType.NONE> = async (
+  req: EndpointRequestType[EndpointAuthType.NONE],
   res: Response
 ) => {
   const { id } = req.params;
@@ -179,8 +221,8 @@ export const updateTempleStatusHandler: EndpointHandler<EndpointAuthType.JWT> = 
 };
 
 // DELETE /temples/:id - Delete temple
-export const deleteTempleHandler: EndpointHandler<EndpointAuthType.JWT> = async (
-  req: EndpointRequestType[EndpointAuthType.JWT],
+export const deleteTempleHandler: EndpointHandler<EndpointAuthType.NONE> = async (
+  req: EndpointRequestType[EndpointAuthType.NONE],
   res: Response
 ) => {
   const { id } = req.params;

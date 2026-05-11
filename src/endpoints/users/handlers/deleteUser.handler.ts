@@ -13,12 +13,11 @@ import {
   DELETE_USER_ERROR
 } from '../userManagement.const';
 
-export const deleteUserHandler: EndpointHandler<EndpointAuthType.JWT> = async (
+export const deleteUserHandler: EndpointHandler<EndpointAuthType.NONE> = async (
   req,
   res
 ) => {
-  const jwtPayload = (req as any).user;
-  const authenticatedUserId = jwtPayload?.user?.id || jwtPayload?.id;
+  const authenticatedUserId = req.user?.id;
   const { id } = req.params;
   const userId = parseInt(id);
 
@@ -27,44 +26,43 @@ export const deleteUserHandler: EndpointHandler<EndpointAuthType.JWT> = async (
     return;
   }
 
-  if (authenticatedUserId === userId) {
-    res.status(400).json({ message: DELETE_USER_CANNOT_DELETE_SELF });
-    return;
-  }
-
   const transaction = await sequelize.transaction();
 
   try {
     const requester = await User.findOne({
       where: { id: authenticatedUserId },
-      attributes: ['id', 'templeId'],
-      include: [{ model: Role, attributes: ['name'] }],
-      transaction
+      attributes: ['id'],
+      include: [
+        {
+          model: Role,
+          attributes: ['name']
+        }
+      ],
+      transaction,
+      lock: transaction.LOCK.UPDATE
     });
 
-    const roleName = requester?.role?.name;
-
-    if (!requester || (roleName !== 'company_superadmin' && roleName !== 'superadmin')) {
+    if (!requester || requester.role?.name !== 'superadmin') {
       await transaction.rollback();
       res.status(403).json({ message: DELETE_USER_FORBIDDEN });
+      return;
+    }
+
+    if (userId === authenticatedUserId) {
+      await transaction.rollback();
+      res.status(400).json({ message: DELETE_USER_CANNOT_DELETE_SELF });
       return;
     }
 
     const user = await User.findOne({
       where: { id: userId },
-      transaction
+      transaction,
+      lock: transaction.LOCK.UPDATE
     });
 
     if (!user) {
       await transaction.rollback();
       res.status(404).json({ message: DELETE_USER_NOT_FOUND });
-      return;
-    }
-
-    // Superadmin can only delete users in their own temple
-    if (roleName === 'superadmin' && user.templeId !== requester.templeId) {
-      await transaction.rollback();
-      res.status(403).json({ message: DELETE_USER_FORBIDDEN });
       return;
     }
 

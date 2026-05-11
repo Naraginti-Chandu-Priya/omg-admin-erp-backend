@@ -15,10 +15,7 @@ import {
   UPDATE_USER_ERROR
 } from '../userManagement.const';
 
-export const updateUserHandler: EndpointHandler<EndpointAuthType.JWT> = async (
-  req,
-  res: Response
-) => {
+export const updateUserHandler: EndpointHandler<EndpointAuthType.NONE> = async (req, res: Response) => {
   const jwtPayload = (req as any).user;
   const authenticatedUserId = jwtPayload?.user?.id || jwtPayload?.id;
   const { id } = req.params;

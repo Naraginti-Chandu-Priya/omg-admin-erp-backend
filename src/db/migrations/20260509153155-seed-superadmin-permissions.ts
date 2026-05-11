@@ -9,7 +9,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   const permissionsTable = dialect === 'postgres' ? '"Permissions"' : 'Permissions';
 
   const roles = (await queryInterface.sequelize.query(
-    `SELECT id FROM ${rolesTable} WHERE name = 'superadmin'`,
+    `SELECT id FROM ${rolesTable} WHERE name = 'company_superadmin'`,
     { type: QueryTypes.SELECT }
   )) as { id: number }[];
 
@@ -21,7 +21,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   )) as { id: number }[];
 
   if (users.length === 0) return;
-  const superadminId = users[0].id;
+  const companySuperadminId = users[0].id;
 
   const permissions = (await queryInterface.sequelize.query(
     `SELECT id FROM ${permissionsTable} WHERE route = '*' AND access = 'read_write'`,
@@ -33,7 +33,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
   await queryInterface.bulkInsert('user_permissions', [
     {
-      userId: superadminId,
+      userId: companySuperadminId,
       permissionId: wildcardPermissionId,
       createdAt: timestamp,
       updatedAt: timestamp
@@ -47,7 +47,7 @@ export async function down(queryInterface: QueryInterface): Promise<void> {
   const usersTable = dialect === 'postgres' ? '"Users"' : 'Users';
 
   const roles = (await queryInterface.sequelize.query(
-    `SELECT id FROM ${rolesTable} WHERE name = 'superadmin'`,
+    `SELECT id FROM ${rolesTable} WHERE name = 'company_superadmin'`,
     { type: QueryTypes.SELECT }
   )) as { id: number }[];
 
@@ -59,9 +59,9 @@ export async function down(queryInterface: QueryInterface): Promise<void> {
   )) as { id: number }[];
 
   if (users.length === 0) return;
-  const superadminId = users[0].id;
+  const companySuperadminId = users[0].id;
 
   await queryInterface.bulkDelete('user_permissions', {
-    userId: superadminId
+    userId: companySuperadminId
   });
 }

@@ -128,6 +128,8 @@ export const mfaConfirmHandler: EndpointHandler<EndpointAuthType.NONE> = async (
       id: user.id,
       email: user.email,
       roleId: user.roleId,
+      templeId: user.templeId,
+      isFirstLogin: user.isFirstLogin,
       sessionId,
       authLevel: 'L2'
     };

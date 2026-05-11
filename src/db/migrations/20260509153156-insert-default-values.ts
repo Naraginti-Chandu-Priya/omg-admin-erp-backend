@@ -69,9 +69,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
   // Insert wildcard permission for the company superadmin if permissions exist
   try {
-    // Note: The new schema uses 'action' instead of 'route'
     const permissions = (await queryInterface.sequelize.query(
-      "SELECT id FROM Permissions WHERE action = '*' LIMIT 1",
+      "SELECT id FROM Permissions WHERE route = '*' LIMIT 1",
       { type: QueryTypes.SELECT }
     )) as { id: number }[];
 

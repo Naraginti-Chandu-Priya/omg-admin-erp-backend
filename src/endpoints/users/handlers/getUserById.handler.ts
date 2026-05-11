@@ -13,7 +13,7 @@ import {
 } from '../userManagement.const';
 
 export const getUserByIdHandler: EndpointHandler<
-  EndpointAuthType.JWT
+  EndpointAuthType.NONE 
 > = async (req, res: Response) => {
   const jwtPayload = (req as any).user;
   const authenticatedUserId = jwtPayload?.user?.id || jwtPayload?.id;

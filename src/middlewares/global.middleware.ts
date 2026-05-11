@@ -50,7 +50,10 @@ const ROUTE_PERMISSION_MAP: Record<string, string> = {
   annathanam: 'annathanam',
   inventory: 'inventory',
   procurement: 'procurement',
-  distribution: 'distribution'
+  distribution: 'distribution',
+  temples: 'temples',
+  users: 'users'
+
 };
 
 function isPublicRoute(req: Request): boolean {
@@ -205,7 +208,7 @@ export const authMiddleware = async (
       sessionId: decoded.sessionId,
       authLevel: decoded.authLevel,
       userPermissions:
-        user.role?.name === 'superadmin'
+        user.role?.name === 'company_superadmin'
           ? [{ route: '*', access: 'read_write' }]
           : (user as unknown as { userPermissions?: UserPermission[] })
               .userPermissions || []

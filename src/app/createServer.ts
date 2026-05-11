@@ -1,12 +1,24 @@
-import { Server, reportDebug, middleware, SecretManagerOptions } from 'node-server-engine';
-import * as endpoints from 'endpoints';
+import { Server, reportDebug, SecretManagerOptions } from 'node-server-engine';
+import * as cookieParser from 'cookie-parser';
+import * as endpoints from '../endpoints';
+import { authMiddleware } from '../middlewares/global.middleware';
+
+import express from 'express';
+import swaggerUi from 'swagger-ui-express';
+import * as fs from 'fs';
+import * as path from 'path';
+import yaml from 'js-yaml';
+
+const swaggerFilePath = path.resolve(__dirname, '../../docs/index.yaml');
+const swaggerContent = fs.readFileSync(swaggerFilePath, 'utf8');
+const swaggerDocument = yaml.load(swaggerContent) as Record<string, unknown>;
 
 reportDebug.setNameSpace('~~namespace~~');
 
-/** Initialize the server */
 export function createServer(): Server {
-  // Optional: Configure Secret Manager for production
-  // Uncomment and customize the secrets array based on your service needs
+  const app = express();
+
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   const secretManagerConfig: SecretManagerOptions = {
     enabled: process.env.NODE_ENV === 'production',
     projectId: process.env.GCP_PROJECT_ID,
@@ -16,7 +28,6 @@ export function createServer(): Server {
       // Example: Load string secrets directly as environment variables
       // 'SQL_PASSWORD',
       // 'JWT_SECRET',
-
       // Example: Load file-based secrets (keys, certificates, etc.)
       // {
       //   name: 'PRIVATE_KEY',
@@ -34,9 +45,8 @@ export function createServer(): Server {
   };
 
   return new Server({
-    globalMiddleware: [middleware.swaggerDocs()],
+    globalMiddleware: [app, cookieParser.default(), authMiddleware],
     endpoints: Object.values(endpoints),
-    // Uncomment to enable Secret Manager
     secretManager: secretManagerConfig
   });
 }

@@ -8,7 +8,6 @@ import {
 import bcrypt from 'bcryptjs';
 import { Response } from 'express';
 import { CreatePassword, Role, User } from 'db';
-import { Op } from 'sequelize';
 import { nanoid } from 'nanoid';
 import { sendMail } from '../../../utils/mailer';
 import {
@@ -23,8 +22,8 @@ import { generateSecretToken } from '../userManagement.helpers';
 import { CreateSecret } from '../userManagement.types';
 
 export const onboardAdminHandler: EndpointHandler<
-  EndpointAuthType.JWT
-> = async (req: EndpointRequestType[EndpointAuthType.JWT], res: Response) => {
+  EndpointAuthType.NONE
+> = async (req: EndpointRequestType[EndpointAuthType.NONE], res: Response) => {
   // node-server-engine JWT wraps payload as { user: { id, ... } }
   const jwtPayload = (req as any).user;
   const authenticatedUserId = jwtPayload?.user?.id || jwtPayload?.id;

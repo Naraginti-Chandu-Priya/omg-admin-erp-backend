@@ -8,13 +8,11 @@ import {
 import bcrypt from 'bcryptjs';
 import { Response } from 'express';
 import { CreatePassword, Role, User, Temple } from 'db';
-import { Op } from 'sequelize';
 import { nanoid } from 'nanoid';
 import { sendMail } from '../../../utils/mailer';
 import {
   ONBOARD_ADMIN_EMAIL_EXISTS,
   ONBOARD_ADMIN_ERROR,
-  ONBOARD_ADMIN_FORBIDDEN,
   ONBOARD_ADMIN_ROLE_NOT_FOUND,
   ONBOARD_ADMIN_UNAUTHORIZED
 } from '../userManagement.const';
@@ -23,9 +21,10 @@ import { generateSecretToken } from '../userManagement.helpers';
 import { CreateSecret } from '../userManagement.types';
 
 export const onboardSuperadminHandler: EndpointHandler<
-  EndpointAuthType.JWT
-> = async (req: EndpointRequestType[EndpointAuthType.JWT], res: Response) => {
-  const authenticatedUserId = req.user?.id;
+  EndpointAuthType.NONE
+> = async (req: EndpointRequestType[EndpointAuthType.NONE], res: Response) => {
+  const jwtPayload = (req as any).user;
+  const authenticatedUserId = jwtPayload?.user?.id || jwtPayload?.id;
 
   if (!authenticatedUserId) {
     res.status(401).json({ message: ONBOARD_ADMIN_UNAUTHORIZED });

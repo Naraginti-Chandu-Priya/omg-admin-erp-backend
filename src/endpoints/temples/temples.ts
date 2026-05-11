@@ -18,7 +18,7 @@ export const createTempleEndpoint = new Endpoint({
   path: '/temples',
   method: EndpointMethod.POST,
   handler: createTempleHandler,
-  authType: EndpointAuthType.JWT,
+  authType: EndpointAuthType.NONE,
   validator: createTempleValidator,
   middleware: [validateCompanySuperAdmin]
 });
@@ -27,7 +27,7 @@ export const getAllTemplesEndpoint = new Endpoint({
   path: '/temples',
   method: EndpointMethod.GET,
   handler: getAllTemplesHandler,
-  authType: EndpointAuthType.JWT,
+  authType: EndpointAuthType.NONE,
   validator: {},
   middleware: [validateCompanySuperAdmin]
 });
@@ -36,7 +36,7 @@ export const getTempleByIdEndpoint = new Endpoint({
   path: '/temples/:id',
   method: EndpointMethod.GET,
   handler: getTempleByIdHandler,
-  authType: EndpointAuthType.JWT,
+  authType: EndpointAuthType.NONE,
   validator: {},
   middleware: [validateCompanySuperAdmin]
 });
@@ -45,7 +45,7 @@ export const updateTempleEndpoint = new Endpoint({
   path: '/temples/:id',
   method: EndpointMethod.PUT,
   handler: updateTempleHandler,
-  authType: EndpointAuthType.JWT,
+  authType: EndpointAuthType.NONE,
   validator: updateTempleValidator,
   middleware: [validateCompanySuperAdmin]
 });
@@ -54,7 +54,7 @@ export const updateTempleStatusEndpoint = new Endpoint({
   path: '/temples/:id/status',
   method: EndpointMethod.PATCH,
   handler: updateTempleStatusHandler,
-  authType: EndpointAuthType.JWT,
+  authType: EndpointAuthType.NONE,
   validator: updateTempleStatusValidator,
   middleware: [validateCompanySuperAdmin]
 });
@@ -63,7 +63,7 @@ export const deleteTempleEndpoint = new Endpoint({
   path: '/temples/:id',
   method: EndpointMethod.DELETE,
   handler: deleteTempleHandler,
-  authType: EndpointAuthType.JWT,
+  authType: EndpointAuthType.NONE,
   validator: {},
   middleware: [validateCompanySuperAdmin]
 });

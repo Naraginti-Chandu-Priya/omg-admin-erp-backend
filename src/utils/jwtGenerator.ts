@@ -6,6 +6,8 @@ export interface JwtPayload {
   authLevel: 'L1' | 'L2';
   email?: string;
   roleId?: number;
+  templeId?: string;
+  isFirstLogin?: boolean;
 }
 
 function getRequiredSecret(key: 'ACCESS_TOKEN' | 'REFRESH_TOKEN'): string {

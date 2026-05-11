@@ -2,8 +2,7 @@ import {
   EndpointAuthType,
   EndpointRequestType,
   EndpointHandler,
-  reportError,
-  generateJwtToken
+  reportError
 } from 'node-server-engine';
 import bcrypt from 'bcryptjs';
 import { Response } from 'express';
@@ -15,8 +14,10 @@ import {
 } from '../auth.const';
 import { hashToken } from '../auth.helpers';
 import {
+  generateAccessToken,
   generateRefreshToken,
-  verifyRefreshToken
+  verifyRefreshToken,
+  JwtPayload
 } from 'utils/jwtGenerator';
 import { randomUUID } from 'crypto';
 
@@ -79,18 +80,18 @@ export const loginHandler: EndpointHandler<EndpointAuthType> = async (
 
     const sessionId = randomUUID();
 
-    const accessToken = generateJwtToken({
+    const payload: JwtPayload = {
       id: user.id,
       email: user.email,
       roleId: user.roleId,
       templeId: user.templeId,
-      isFirstLogin: user.isFirstLogin
-    });
-    const refreshToken = generateRefreshToken({
-      id: user.id,
+      isFirstLogin: user.isFirstLogin,
       sessionId,
-      authLevel: 'L1'
-    });
+      authLevel: [1, 2, 3].includes(user.roleId) ? 'L1' : 'L2'
+    };
+
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
 
     await Session.create({
       id: sessionId,

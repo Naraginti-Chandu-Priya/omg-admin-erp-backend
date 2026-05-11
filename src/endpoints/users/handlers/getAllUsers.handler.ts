@@ -1,5 +1,6 @@
 import {
   EndpointAuthType,
+  EndpointRequestType,
   EndpointHandler,
   reportError
 } from 'node-server-engine';
@@ -23,8 +24,8 @@ function parsePositiveInteger(value: unknown, fallback: number): number {
 }
 
 export const getAllUsersHandler: EndpointHandler<
-  EndpointAuthType.JWT
-> = async (req, res: Response) => {
+  EndpointAuthType.NONE
+> = async (req: EndpointRequestType[EndpointAuthType.NONE], res: Response) => {
   const jwtPayload = (req as any).user;
   const authenticatedUserId = jwtPayload?.user?.id || jwtPayload?.id;
 
@@ -62,7 +63,8 @@ export const getAllUsersHandler: EndpointHandler<
       page = 1,
       limit = 10,
       search,
-      status
+      status,
+      roleId
     } = req.query as Record<string, unknown>;
 
     const currentPage = parsePositiveInteger(page, 1);
@@ -73,19 +75,21 @@ export const getAllUsersHandler: EndpointHandler<
 
     const searchClause = searchTerm
       ? {
-          [Op.or]: [
-            { firstName: { [Op.like]: `%${searchTerm}%` } },
-            { lastName: { [Op.like]: `%${searchTerm}%` } },
-            { email: { [Op.like]: `%${searchTerm}%` } },
-            { phoneNumber: { [Op.like]: `%${searchTerm}%` } }
-          ]
-        }
+        [Op.or]: [
+          { firstName: { [Op.like]: `%${searchTerm}%` } },
+          { lastName: { [Op.like]: `%${searchTerm}%` } },
+          { email: { [Op.like]: `%${searchTerm}%` } },
+          { phoneNumber: { [Op.like]: `%${searchTerm}%` } }
+        ]
+      }
       : {};
 
     const statusClause =
       status === 'active' || status === 'suspended' || status === 'inactive'
         ? { accountStatus: status }
         : {};
+
+    const roleIdClause = roleId ? { roleId: Number(roleId) } : {};
 
     // company_superadmin sees all users; superadmin sees only users in their temple
     const templeClause =
@@ -96,6 +100,7 @@ export const getAllUsersHandler: EndpointHandler<
     const where: WhereOptions<User> = {
       ...searchClause,
       ...statusClause,
+      ...roleIdClause,
       ...templeClause
     };
 
@@ -156,4 +161,18 @@ export const getAllUsersHandler: EndpointHandler<
     reportError(error);
     res.status(500).json({ message: GET_USERS_ERROR });
   }
+};
+
+export const getAllSuperadminsHandler: EndpointHandler<
+  EndpointAuthType.NONE
+> = async (req: EndpointRequestType[EndpointAuthType.NONE], res: Response) => {
+  req.query.roleId = '1';
+  return getAllUsersHandler(req, res);
+};
+
+export const getAllAdminsHandler: EndpointHandler<
+  EndpointAuthType.NONE
+> = async (req: EndpointRequestType[EndpointAuthType.NONE], res: Response) => {
+  req.query.roleId = '2';
+  return getAllUsersHandler(req, res);
 };

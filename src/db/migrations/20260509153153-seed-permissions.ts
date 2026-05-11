@@ -19,7 +19,11 @@ const routes = [
   'staff',
   'temple-events',
   'volunteer',
-  'duty'
+  'duty',
+  'temples',
+  'procurement',
+  'distribution',
+  'users'
 ];
 
 export async function up(queryInterface: QueryInterface): Promise<void> {

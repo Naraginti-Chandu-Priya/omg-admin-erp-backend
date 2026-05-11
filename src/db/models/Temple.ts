@@ -44,6 +44,6 @@ export class Temple extends Model {
   @Column({ type: DataType.INTEGER, allowNull: true })
   createdBy?: number;
 
-  @HasMany(() => User)
+  @HasMany(() => User, { onDelete: 'CASCADE',onUpdate: 'CASCADE' })
   users!: User[];
 }
