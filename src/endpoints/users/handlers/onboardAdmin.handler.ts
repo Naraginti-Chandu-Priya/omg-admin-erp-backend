@@ -25,7 +25,8 @@ import { CreateSecret } from '../userManagement.types';
 export const onboardAdminHandler: EndpointHandler<
   EndpointAuthType.NONE
 > = async (req: EndpointRequestType[EndpointAuthType.NONE], res: Response) => {
-  const authenticatedUserId = req.user?.id;
+  const jwtPayload = (req as any).user;
+  const authenticatedUserId = jwtPayload?.id || jwtPayload?.user?.id;
 
   if (!authenticatedUserId) {
     res.status(401).json({ message: ONBOARD_ADMIN_UNAUTHORIZED });
@@ -85,6 +86,7 @@ export const onboardAdminHandler: EndpointHandler<
         isFirstLogin: true,
         password: tempPasswordHash,
         roleId: adminRole.id,
+        templeId: requester.templeId,
         createdBy: requester.id,
         updatedBy: requester.id,
         accountStatus: 'active'

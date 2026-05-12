@@ -24,7 +24,7 @@ export const onboardSuperadminHandler: EndpointHandler<
   EndpointAuthType.NONE
 > = async (req: EndpointRequestType[EndpointAuthType.NONE], res: Response) => {
   const jwtPayload = (req as any).user;
-  const authenticatedUserId = jwtPayload?.user?.id || jwtPayload?.id;
+  const authenticatedUserId = jwtPayload?.id || jwtPayload?.user?.id;
 
   if (!authenticatedUserId) {
     res.status(401).json({ message: ONBOARD_ADMIN_UNAUTHORIZED });
