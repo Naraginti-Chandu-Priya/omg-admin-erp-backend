@@ -44,9 +44,9 @@ const ROUTE_PERMISSION_MAP: Record<string, string> = {
   assets: 'assets',
   parking: 'parking',
   staff: 'staff',
-  templeEvents: 'temple-events',
-  volunteer: 'volunteer',
-  duty: 'duty',
+  'temple-events': 'temple-events',
+  volunteers: 'volunteers',
+  'staff-duties': 'staff-duties',
   annathanam: 'annathanam',
   inventory: 'inventory',
   procurement: 'procurement',
@@ -181,7 +181,18 @@ export const authMiddleware = async (
     const user = await User.findByPk(decoded.id, {
       attributes: ['id', 'email', 'roleId', 'accountStatus'],
       include: [
-        { model: Role, attributes: ['name'] },
+        {
+          model: Role,
+          attributes: ['name'],
+          include: [
+            {
+              model: Permission,
+              as: 'permissions',
+              attributes: ['route', 'access'],
+              through: { attributes: [] }
+            }
+          ]
+        },
         {
           model: Permission,
           as: 'userPermissions',
@@ -208,10 +219,12 @@ export const authMiddleware = async (
       sessionId: decoded.sessionId,
       authLevel: decoded.authLevel,
       userPermissions:
-        user.role?.name === 'company_superadmin'
+        user.role?.name === 'company_superadmin' || user.role?.name === 'superadmin'
           ? [{ route: '*', access: 'read_write' }]
-          : (user as unknown as { userPermissions?: UserPermission[] })
-              .userPermissions || []
+          : [
+              ...((user as any).userPermissions || []),
+              ...((user.role as any)?.permissions || [])
+            ]
     };
 
     if (

@@ -7,7 +7,8 @@ import {
 } from 'node-server-engine';
 import bcrypt from 'bcryptjs';
 import { Response } from 'express';
-import { CreatePassword, Role, User } from 'db';
+import { CreatePassword, Role, User, Permission, UserPermission } from 'db';
+import { Op } from 'sequelize';
 import { nanoid } from 'nanoid';
 import { sendMail } from '../../../utils/mailer';
 import {
@@ -24,16 +25,14 @@ import { CreateSecret } from '../userManagement.types';
 export const onboardAdminHandler: EndpointHandler<
   EndpointAuthType.NONE
 > = async (req: EndpointRequestType[EndpointAuthType.NONE], res: Response) => {
-  // node-server-engine JWT wraps payload as { user: { id, ... } }
-  const jwtPayload = (req as any).user;
-  const authenticatedUserId = jwtPayload?.user?.id || jwtPayload?.id;
+  const authenticatedUserId = req.user?.id;
 
   if (!authenticatedUserId) {
     res.status(401).json({ message: ONBOARD_ADMIN_UNAUTHORIZED });
     return;
   }
 
-  const { firstName, lastName, email, phoneNumber } =
+  const { firstName, lastName, email, phoneNumber, routePermissions } =
     req.body;
 
   const transaction = await sequelize.transaction();
@@ -86,17 +85,41 @@ export const onboardAdminHandler: EndpointHandler<
         isFirstLogin: true,
         password: tempPasswordHash,
         roleId: adminRole.id,
-        templeId: requester.templeId, // Admin always belongs to the superadmin's temple
         createdBy: requester.id,
         updatedBy: requester.id,
-        accountStatus: 'active',
-        mfaCode: '',
-        mfaFailedCount: 0
+        accountStatus: 'active'
       },
       { transaction }
     );
 
-    // Permissions are handled via RolePermission now, no direct UserPermission assignment
+    if (Array.isArray(routePermissions) && routePermissions.length > 0) {
+      const permissionRecords = await Permission.findAll({
+        where: {
+          [Op.or]: (
+            routePermissions as {
+              path?: string;
+              route?: string;
+              access: string;
+            }[]
+          ).map((rp) => ({
+            route: rp.path || rp.route,
+            access: rp.access
+          }))
+        },
+        transaction
+      });
+
+      const userPermissionsToInsert = permissionRecords.map((p) => ({
+        userId: createdAdmin.id,
+        permissionId: p.id
+      }));
+
+      if (userPermissionsToInsert.length > 0) {
+        await UserPermission.bulkCreate(userPermissionsToInsert, {
+          transaction
+        });
+      }
+    }
 
     const tokenPayload: CreateSecret = {
       userId: createdAdmin.id,
